@@ -18,6 +18,9 @@ import { dashboardRouter } from './routes/dashboard';
 import { statsRouter } from './routes/stats';
 import { authMiddleware } from './middleware/auth'; // Import middleware
 import notificationRouter from './routes/notifications';
+import goals from './routes/goals';
+import subscriptions from './routes/subscriptions';
+import exportCSV from './routes/export';
 
 // Middleware
 app.use(
@@ -47,6 +50,9 @@ app.route('/stats', statsRouter);
 app.route('/recurring', recurring);
 app.route('/notifications', notificationRouter);
 app.route('/user', user);
+app.route('/goals', goals);
+app.route('/subscriptions', subscriptions);
+app.route('/export', exportCSV);
 
 // Health check
 app.get('/', (c) => c.text('FinTrack API is running!'));

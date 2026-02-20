@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { Download } from 'lucide-react';
+import { api } from '@/services/api';
 
 interface ExportDataModalProps {
   open: boolean;
@@ -35,8 +36,19 @@ export default function ExportDataModal({ open, onClose }: ExportDataModalProps)
     return [headers, ...rows].join('\n');
   };
 
-  const handleExport = () => {
-    // Filter data by date range
+  const handleExport = async () => {
+    // If CSV format for transactions is selected, leverage the backend generator
+    if (format === 'csv' && includeTransactions && !includeBudgets && !includeWallets) {
+        try {
+            await api.exportCSV('/export/csv', `fintrack-transactions-export.csv`);
+            onClose();
+        } catch (error) {
+            console.error('Failed to export CSV from server:', error);
+        }
+        return;
+    }
+
+    // Fallback for JSON or other combinations (local export)
     const data = transactions.filter((t) => t.date >= dateFrom && t.date <= dateTo);
     
     let content = '';
@@ -49,10 +61,6 @@ export default function ExportDataModal({ open, onClose }: ExportDataModalProps)
         mimeType = 'application/json';
         extension = 'json';
     } else {
-        // CSV Format
-        // Flatten object if needed? Transaction object is already quite flat.
-        // We probably only want specific fields for specific CSVs. 
-        // Let's just dump the Transaction object for now.
         if (includeTransactions) {
              content = convertToCSV(data);
              mimeType = 'text/csv';

@@ -1,0 +1,16 @@
+﻿
+ Γ¢à∩╕Å wrangler 3.114.17 (update available 4.67.0)
+-----------------------------------------------
+
+≡ƒîÇ Executing on local database fintrack-db (fintrack-db-local) from .wrangler\state\v3\d1:
+≡ƒîÇ To execute on your remote database, add a --remote flag to your wrangler command.
+≡ƒÜú 1 command executed successfully.
+[
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  }
+]

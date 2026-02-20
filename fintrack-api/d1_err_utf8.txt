@@ -1,0 +1,50 @@
+﻿
+ Γ¢à∩╕Å wrangler 3.114.17 (update available 4.67.0)
+-----------------------------------------------
+
+node.exe : [33mΓû▓ [43;33
+m[[43;30mWARNING[43;33m]
+[0m [1mThe version of Wran
+gler you are using is now o
+ut-of-date.[0m
+At line:1 char:1
++ & "C:\Program Files\nodej
+s/node.exe" "C:\Program Fil
+es\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: ([3  
+  3mΓû▓ [43;3...ut-of-d   
+ ate.[0m:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+
+  Please update to the late
+st version to prevent criti
+cal errors.
+  Run `npm install --save-d
+ev wrangler@4` to update to
+ the latest version.
+  After installation, run W
+rangler with `npx wrangler`
+.
+
+
+≡ƒîÇ Executing on local database fintrack-db (fintrack-db-local) from .wrangler\state\v3\d1:
+≡ƒîÇ To execute on your remote database, add a --remote flag to your wrangler command.
+
+[31mX [41;31m[[41;97mERR
+OR[41;31m][0m [1mtable c
+ategories has no column nam
+ed group: SQLITE_ERROR[0m
+
+
+≡ƒ¬╡  Logs were written to 
+"C:\Users\User\AppData\Roam
+ing\xdg.config\.wrangler\lo
+gs\wrangler-2026-02-20_13-4
+5-57_657.log"

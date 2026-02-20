@@ -109,3 +109,32 @@ CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id
 CREATE INDEX IF NOT EXISTS idx_budgets_month ON budgets(month);
 CREATE INDEX IF NOT EXISTS idx_recurring_next_due ON recurring_rules(next_due);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+
+-- Goals
+CREATE TABLE IF NOT EXISTS goals (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  target_amount INTEGER NOT NULL,
+  current_amount INTEGER NOT NULL DEFAULT 0,
+  deadline TEXT,
+  color TEXT,
+  icon TEXT,
+  user_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Subscriptions
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  category_id TEXT,
+  frequency TEXT NOT NULL CHECK(frequency IN ('monthly', 'yearly')),
+  next_billing_date TEXT NOT NULL,
+  status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'cancelled')),
+  user_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (category_id) REFERENCES categories(id)
+);

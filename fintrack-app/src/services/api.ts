@@ -35,6 +35,25 @@ export const api = {
       headers: { ...options?.headers, 'Content-Type': 'application/json' },
     });
   },
+  exportCSV: async (endpoint: string, filename: string = 'export.csv') => {
+    const url = `${API_URL}${endpoint}`;
+    const token = useAuthStore.getState().token;
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, { method: 'GET', headers });
+    if (!response.ok) throw new Error('Failed to export CSV');
+    
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  }
 };
 
 import { useAuthStore } from '@/store/useAuthStore';

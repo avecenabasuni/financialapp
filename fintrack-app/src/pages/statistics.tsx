@@ -12,7 +12,7 @@ import { useCategoryStore } from '@/store/useCategoryStore';
 import { formatCurrency } from '@/lib/utils';
 import EmptyState from '@/components/shared/empty-state';
 import AnimatedPage from '@/components/shared/animated-page';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart3, TrendingUp, TrendingDown, ArrowUpRight, PiggyBank, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,9 +23,28 @@ export default function Statistics() {
   // Always use all transactions for the overview processing
   return <StatisticsContent allTransactions={transactions} />;
 }
+function CustomBarTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white rounded-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.1)] border border-gray-100 p-3 min-w-[130px]">
+        <p className="text-[#64748b] text-[13px] font-medium mb-1.5">{label}</p>
+        <div className="space-y-1">
+          <p className="text-[#10b981] font-medium text-[13px]">
+            Income: {formatCurrency(payload[0]?.value || 0)}
+          </p>
+          <p className="text-[#6366f1] font-medium text-[13px]">
+            Expenses: {formatCurrency(payload[1]?.value || 0)}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
 
 function StatisticsContent({ allTransactions }: any) {
   const { categories } = useCategoryStore();
+  const [activeTab, setActiveTab] = useState('overview');
 
   const data = useMemo(() => {
     const today = new Date();
@@ -209,7 +228,7 @@ function StatisticsContent({ allTransactions }: any) {
   }
 
   return (
-    <AnimatedPage className="space-y-6">
+    <AnimatedPage className="space-y-6 pb-10">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
@@ -221,81 +240,82 @@ function StatisticsContent({ allTransactions }: any) {
         </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      {/* KPI Cards (Global) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard 
+              title="Highest Saving Month" 
+              value={data.highestSavingMonth} 
+              icon={TrendingUp} 
+              color="text-emerald-500" 
+              subtext={`${formatCurrency(data.highestSavingValue)} saved`} 
+          />
+          <KPICard 
+              title="Top Spending Category" 
+              value={data.topSpendingCategory} 
+              icon={ArrowUpRight} 
+              color="text-violet-500" 
+              subtext={`${formatCurrency(data.topSpendingValue)} this month`}
+          />
+          <KPICard 
+              title="Spending Trend" 
+              value={data.spendingTrendDirection} 
+              icon={data.spendingTrendDirection === 'Decreasing' ? TrendingDown : TrendingUp} 
+              color={data.spendingTrendDirection === 'Decreasing' ? 'text-emerald-500' : 'text-rose-500'} 
+              subtext={`${data.spendingTrendValue > 0 ? '+' : ''}${data.spendingTrendValue.toFixed(1)}% vs last month`}
+          />
+          <KPICard 
+              title="Savings Rate" 
+              value={`${data.savingsRate.toFixed(0)}%`} 
+              icon={PiggyBank} 
+              color="text-amber-500" 
+              subtext="Of total income" 
+          />
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-transparent space-x-2 p-0 h-auto">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Overview</TabsTrigger>
-            <TabsTrigger value="spending" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Spending</TabsTrigger>
-            <TabsTrigger value="savings" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Savings</TabsTrigger>
+            <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full px-5 py-2 bg-gray-50/50 border text-muted-foreground data-[state=active]:text-foreground">Overview</TabsTrigger>
+            <TabsTrigger value="spending" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full px-5 py-2 bg-gray-50/50 border text-muted-foreground data-[state=active]:text-foreground">Spending</TabsTrigger>
+            <TabsTrigger value="savings" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full px-5 py-2 bg-gray-50/50 border text-muted-foreground data-[state=active]:text-foreground">Savings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPICard 
-                    title="Highest Saving Month" 
-                    value={data.highestSavingMonth} 
-                    icon={TrendingUp} 
-                    color="text-emerald-500" 
-                    subtext={`${formatCurrency(data.highestSavingValue)} saved`} 
-                />
-                <KPICard 
-                    title="Top Spending Category" 
-                    value={data.topSpendingCategory} 
-                    icon={ArrowUpRight} 
-                    color="text-violet-500" 
-                    subtext={`${formatCurrency(data.topSpendingValue)} this month`}
-                />
-                <KPICard 
-                    title="Spending Trend" 
-                    value={data.spendingTrendDirection} 
-                    icon={data.spendingTrendDirection === 'Decreasing' ? TrendingDown : TrendingUp} 
-                    color={data.spendingTrendDirection === 'Decreasing' ? 'text-emerald-500' : 'text-rose-500'} 
-                    subtext={`${data.spendingTrendValue > 0 ? '+' : ''}${data.spendingTrendValue.toFixed(1)}% vs last month`}
-                />
-                <KPICard 
-                    title="Savings Rate" 
-                    value={`${data.savingsRate.toFixed(0)}%`} 
-                    icon={PiggyBank} 
-                    color="text-amber-500" 
-                    subtext="Of total income" 
-                />
-            </div>
-
+            {activeTab === 'overview' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Bar Chart - Net Flow (Green/Purple bars) */}
-                <Card>
+                <Card className="shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Net Cash Flow</CardTitle>
+                        <CardTitle className="text-lg font-medium">Net Cash Flow</CardTitle>
                         <CardDescription>Monthly income minus expenses</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] mt-4">
+                    <CardContent className="h-[350px] mt-4 w-full min-w-0 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
                                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
-                                <Tooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
-                                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                                <Bar dataKey="expense" name="Expense" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                <Tooltip content={<CustomBarTooltip />} cursor={{ fill: '#e2e8f0', opacity: 0.8 }} />
+                                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
+                                <Bar dataKey="expense" name="Expense" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
                 {/* Radar Chart - Category Pattern */}
-                <Card>
+                <Card className="shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Spending Pattern</CardTitle>
+                        <CardTitle className="text-lg font-medium">Spending Pattern</CardTitle>
                         <CardDescription>Current vs average spending by category</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center -mt-4">
+                    <CardContent className="h-[350px] flex items-center justify-center -mt-4 w-full min-w-0 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data.radarData}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data.radarData}>
                                 <PolarGrid stroke="hsl(var(--muted))" strokeOpacity={0.5} />
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
-                                <Radar name="Current Month" dataKey="current" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                                <Radar name="6-Month Average" dataKey="average" stroke="#6366f1" strokeDasharray="5 5" fill="none" />
+                                <Radar name="Current Month" dataKey="current" stroke="#10b981" fill="#10b981" fillOpacity={0.2} isAnimationActive={false} />
+                                <Radar name="6-Month Average" dataKey="average" stroke="#6366f1" strokeDasharray="4 4" fill="none" isAnimationActive={false} />
                                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
                                 <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
                             </RadarChart>
@@ -303,19 +323,21 @@ function StatisticsContent({ allTransactions }: any) {
                     </CardContent>
                 </Card>
             </div>
+            )}
         </TabsContent>
 
         <TabsContent value="spending" className="space-y-6 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="h-[450px] flex flex-col">
+            {activeTab === 'spending' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="h-[450px] flex flex-col shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Category Breakdown</CardTitle>
+                        <CardTitle className="text-lg font-medium">Category Breakdown</CardTitle>
                         <CardDescription>Spending by category this month</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="90%">
+                    <CardContent className="flex-1 flex items-center justify-center pb-8 w-full min-w-0 min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={expenseByCategory} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value" stroke="none">
+                                <Pie data={expenseByCategory} cx="50%" cy="50%" innerRadius={90} outerRadius={140} paddingAngle={3} dataKey="value" stroke="none" isAnimationActive={false}>
                                     {expenseByCategory.map((entry: any, index: number) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
@@ -326,9 +348,9 @@ function StatisticsContent({ allTransactions }: any) {
                     </CardContent>
                 </Card>
 
-                <Card className="h-[450px] flex flex-col">
+                <Card className="h-[450px] flex flex-col shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Spending Ranking</CardTitle>
+                        <CardTitle className="text-lg font-medium">Spending Ranking</CardTitle>
                         <CardDescription>Categories sorted by amount spent</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-auto pr-2">
@@ -337,12 +359,12 @@ function StatisticsContent({ allTransactions }: any) {
                                 <div key={cat.name} className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-4">
                                         <span className="text-muted-foreground w-4 text-left">{i+1}</span>
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                                        <span className="font-medium">{cat.name}</span>
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                                        <span className="font-medium text-base">{cat.name}</span>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className="font-medium tabular-nums text-right w-20">{formatCurrency(cat.value)}</span>
-                                        <span className="text-muted-foreground w-12 text-right">{((cat.value / data.expense) * 100).toFixed(0)}%</span>
+                                        <span className="font-semibold tabular-nums text-right w-24 text-base tracking-tight">{formatCurrency(cat.value)}</span>
+                                        <span className="text-xs font-medium bg-secondary text-secondary-foreground px-2 py-1 rounded w-12 text-center">{((cat.value / data.expense) * 100).toFixed(0)}%</span>
                                     </div>
                                 </div>
                             ))}
@@ -350,16 +372,18 @@ function StatisticsContent({ allTransactions }: any) {
                     </CardContent>
                 </Card>
             </div>
+            )}
         </TabsContent>
 
         <TabsContent value="savings" className="space-y-6 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+            {activeTab === 'savings' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Savings Trend</CardTitle>
+                        <CardTitle className="text-lg font-medium">Savings Trend</CardTitle>
                         <CardDescription>Monthly savings over time</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[350px]">
+                    <CardContent className="h-[350px] w-full min-w-0 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -370,32 +394,33 @@ function StatisticsContent({ allTransactions }: any) {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
                                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
-                                <YAxis tickFormatter={(val) => `$${val}`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+                                <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} width={60} />
                                 <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
-                                <Area type="monotone" dataKey="net" name="Net Savings" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorSavings)" />
+                                <Area type="monotone" dataKey="net" name="Net Savings" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorSavings)" isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="shadow-sm rounded-xl">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Savings Rate History</CardTitle>
+                        <CardTitle className="text-lg font-medium">Savings Rate History</CardTitle>
                         <CardDescription>Percentage of income saved each month</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[350px]">
+                    <CardContent className="h-[350px] w-full min-w-0 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
                                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis tickFormatter={(val) => `${val}%`} domain={[0, 'auto']} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
                                 <Tooltip formatter={(val: any) => typeof val === 'number' ? `${val.toFixed(1)}%` : `${val}%`} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
-                                <Line type="monotone" dataKey="savingsRate" name="Savings Rate" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="savingsRate" name="Savings Rate" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>
+            )}
         </TabsContent>
       </Tabs>
     </AnimatedPage>
@@ -404,16 +429,16 @@ function StatisticsContent({ allTransactions }: any) {
 
 function KPICard({ title, amount, value, icon: Icon, color, subtext }: any) {
     return (
-        <Card>
-            <CardContent className="p-6 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground font-medium">{title}</span>
-                    <div className={cn("p-2 rounded-full bg-secondary", color && color.replace('text-', 'bg-').replace('500', '100'))}>
-                        <Icon className={cn("w-4 h-4", color)} />
-                    </div>
+        <Card className="shadow-sm rounded-xl">
+            <CardContent className="p-5 flex items-start gap-4">
+                <div className={cn("p-3 rounded-full flex items-center justify-center flex-shrink-0", color && color.replace('text-', 'bg-').replace('500', '100'))}>
+                    <Icon className={cn("w-5 h-5", color)} />
                 </div>
-                <div className="text-xl font-bold mt-2 truncate">{value !== undefined ? value : (amount !== undefined ? formatCurrency(amount) : '')}</div>
-                {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                    <span className="text-xs text-muted-foreground font-medium">{title}</span>
+                    <div className="text-xl font-bold tracking-tight">{value !== undefined ? value : (amount !== undefined ? formatCurrency(amount) : '')}</div>
+                    {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
+                </div>
             </CardContent>
         </Card>
     )

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-import { LayoutDashboard, ArrowRightLeft, BarChart3, FolderKanban, Wallet, PiggyBank, Settings, X, LogOut, Moon, Sun, Check, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, BarChart3, FolderKanban, Wallet, PiggyBank, Settings, X, LogOut, Moon, Sun, Check, Monitor, ChevronLeft, ChevronRight, Target, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -26,6 +26,8 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { label: 'Transactions', icon: ArrowRightLeft, path: '/transactions' },
   { label: 'Budgets', icon: PiggyBank, path: '/budgets' },
+  { label: 'Goals', icon: Target, path: '/goals' },
+  { label: 'Subscriptions', icon: Calendar, path: '/subscriptions' },
   { label: 'Analytics', icon: BarChart3, path: '/statistics' },
   { label: 'Accounts', icon: Wallet, path: '/wallets' },
   { label: 'Categories', icon: FolderKanban, path: '/categories' },
