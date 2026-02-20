@@ -7,13 +7,13 @@ type Bindings = {
   DB: D1Database;
 };
 
-const notificationRouter = new Hono<{ Bindings: Bindings, Variables: { user: any } }>();
+const notificationRouter = new Hono<{ Bindings: Bindings, Variables: { jwtPayload: any } }>();
 
 notificationRouter.use('*', authMiddleware);
 
 // Get all notifications for the user
 notificationRouter.get('/', async (c) => {
-  const userId = c.get('user').userId;
+  const userId = c.get('jwtPayload').sub;
   
   try {
     const { results } = await c.env.DB.prepare(
@@ -33,7 +33,7 @@ notificationRouter.get('/', async (c) => {
 
 // Mark a notification as read
 notificationRouter.patch('/:id/read', async (c) => {
-  const userId = c.get('user').userId;
+  const userId = c.get('jwtPayload').sub;
   const notificationId = c.req.param('id');
 
   try {
@@ -49,7 +49,7 @@ notificationRouter.patch('/:id/read', async (c) => {
 
 // Mark ALL notifications as read
 notificationRouter.patch('/read-all', async (c) => {
-  const userId = c.get('user').userId;
+  const userId = c.get('jwtPayload').sub;
 
   try {
     await c.env.DB.prepare(
@@ -72,7 +72,7 @@ const createNotificationSchema = z.object({
 });
 
 notificationRouter.post('/', zValidator('json', createNotificationSchema), async (c) => {
-    const userId = c.get('user').userId;
+    const userId = c.get('jwtPayload').sub;
     const { title, message, type } = c.req.valid('json');
     const id = crypto.randomUUID();
 
