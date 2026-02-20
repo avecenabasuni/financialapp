@@ -1,5 +1,4 @@
-// Force production URL regardless of env vars to prevent GitHub Secret typos
-const API_URL = import.meta.env.DEV ? 'http://localhost:8787' : 'https://fintrack-api.avecenalegacy.workers.dev';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
