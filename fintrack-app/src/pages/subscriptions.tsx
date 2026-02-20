@@ -2,180 +2,235 @@ import { useEffect, useState } from 'react';
 import AnimatedPage from '@/components/shared/animated-page';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Edit2, Trash2, Clock, CreditCard, AlertCircle, MoreHorizontal } from 'lucide-react';
 import { useSubscriptionStore, type Subscription } from '@/store/useSubscriptionStore';
-import { format, isThisMonth, isFuture, addMonths } from 'date-fns';
+import { useCategoryStore } from '@/store/useCategoryStore';
+import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import CategoryIcon from '@/components/shared/category-icon';
 import AddSubscriptionModal from '@/components/modals/add-subscription-modal';
+
+const SummaryCard = ({ icon, title, value, valueClass = "" }: any) => (
+  <Card className="rounded-2xl shadow-sm border-border/50">
+    <CardContent className="p-5 flex items-center gap-4">
+      <div className="w-12 h-12 rounded-full bg-secondary/50 flex items-center justify-center">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1">{title}</p>
+        <p className={`text-xl font-bold ${valueClass}`}>{value}</p>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default function Subscriptions() {
   const { subscriptions, fetchSubscriptions, isLoading, deleteSubscription } = useSubscriptionStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [subToEdit, setSubToEdit] = useState<Subscription | null>(null);
 
   useEffect(() => {
     fetchSubscriptions();
-  }, [fetchSubscriptions]);
+    fetchCategories();
+  }, [fetchSubscriptions, fetchCategories]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
   };
 
-  const calculateTotalMonthly = () => {
-     let total = 0;
-     subscriptions.forEach(sub => {
-         if (sub.status !== 'active') return;
-         if (sub.frequency === 'monthly') total += sub.amount;
-         if (sub.frequency === 'yearly') total += (sub.amount / 12);
-     });
-     return total;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const calculateDaysLeft = (dateString: string) => {
+    const date = new Date(dateString);
+    date.setHours(0,0,0,0);
+    const diffTime = date.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const getUpcomingThisMonth = () => {
-    const sorted = [...subscriptions].sort((a,b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime());
-    return sorted.filter(sub => sub.status === 'active' && isThisMonth(new Date(sub.nextBillingDate)) || (isFuture(new Date(sub.nextBillingDate)) && new Date(sub.nextBillingDate) < addMonths(new Date(), 1)));
+  const getCategory = (id?: string) => id ? categories.find(c => c.id === id) : undefined;
+
+  const activeSubs = subscriptions.filter(s => s.status === 'active');
+  
+  const overdueSubs = activeSubs.filter(sub => calculateDaysLeft(sub.nextBillingDate) < 0);
+
+  const upcomingSubs = activeSubs.filter(sub => {
+    const days = calculateDaysLeft(sub.nextBillingDate);
+    return days >= 0 && days <= 30;
+  }).sort((a,b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime());
+
+  const upcomingTotal = upcomingSubs.reduce((acc, sub) => acc + sub.amount, 0);
+  
+  const totalMonthly = activeSubs.reduce((acc, sub) => {
+      if (sub.frequency === 'monthly') return acc + sub.amount;
+      if (sub.frequency === 'yearly') return acc + (sub.amount / 12);
+      return acc;
+  }, 0);
+
+  const SubList = ({ subs }: { subs: Subscription[] }) => {
+    if (subs.length === 0) return <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-2xl h-32 flex items-center justify-center">No subscriptions found.</div>;
+    return (
+      <div className="space-y-3">
+        {subs.map(sub => {
+          const cat = getCategory(sub.categoryId);
+          const daysLeft = calculateDaysLeft(sub.nextBillingDate);
+          
+          let statusText = '';
+          let statusColor = '';
+          if (sub.status !== 'active') {
+             statusText = String(sub.status);
+             statusColor = 'text-muted-foreground capitalize';
+          } else if (daysLeft < 0) {
+             statusText = `${Math.abs(daysLeft)}d overdue`;
+             statusColor = 'text-rose-500 font-bold';
+          } else if (daysLeft === 0) {
+             statusText = 'Due today';
+             statusColor = 'text-amber-500 font-bold';
+          } else {
+             statusText = `${daysLeft}d left`;
+             statusColor = 'text-blue-500';
+          }
+
+          return (
+            <Card key={sub.id} className="rounded-2xl shadow-sm hover:shadow transition-shadow group border-border/50">
+               <CardContent className="p-4 flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary">
+                            {cat?.icon ? <CategoryIcon icon={cat.icon} size="sm" /> : <div className="font-bold text-lg">{sub.name.charAt(0)}</div>}
+                       </div>
+                       <div>
+                           <div className="flex items-center gap-2">
+                             <h4 className="font-semibold">{sub.name}</h4>
+                             {sub.status === 'active' && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none">Auto</Badge>}
+                           </div>
+                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 capitalize">
+                               <span>{cat?.name || 'Uncategorized'}</span>
+                               <span>•</span>
+                               <span>{sub.frequency}</span>
+                           </div>
+                       </div>
+                   </div>
+
+                   <div className="flex items-center gap-6">
+                       <div className="text-right flex flex-col items-end">
+                           <div className="font-bold text-base">{formatCurrency(sub.amount)}</div>
+                           <div className={`text-xs flex items-center gap-1 mt-1 ${statusColor}`}>
+                               {(daysLeft > 0 && sub.status === 'active') && <Clock className="w-3 h-3" />}
+                               {(daysLeft < 0 && sub.status === 'active') && <AlertCircle className="w-3 h-3" />}
+                               {statusText}
+                           </div>
+                       </div>
+
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setSubToEdit(sub)}>
+                              <Edit2 className="w-4 h-4 mr-2" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => deleteSubscription(sub.id)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                   </div>
+               </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
   };
 
-  const totalMonthly = calculateTotalMonthly();
-  const upcoming = getUpcomingThisMonth();
+  if (isLoading && subscriptions.length === 0) {
+      return (
+        <AnimatedPage className="space-y-6">
+            <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        </AnimatedPage>
+      );
+  }
 
   return (
-    <AnimatedPage className="space-y-6">
+    <AnimatedPage className="space-y-8 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
-          <p className="text-muted-foreground">Manage your recurring bills and subscriptions.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Bills & Subscriptions</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Manage your recurring payments and subscriptions.</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className="rounded-lg gap-2">
-           <Plus className="w-4 h-4" /> Add Subscription
+        <Button onClick={() => setIsAddModalOpen(true)} className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white gap-2 font-semibold px-6">
+           <Plus className="w-4 h-4" /> Add Bill
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="rounded-xl shadow-sm bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/20 dark:to-zinc-950 border-none">
-            <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                   <CalendarIcon className="w-6 h-6" />
-                </div>
-                <div>
-                   <p className="text-sm font-medium text-muted-foreground">Total Monthly Cost</p>
-                   <p className="text-3xl font-bold text-indigo-600">{formatCurrency(totalMonthly)}</p>
-                </div>
-            </CardContent>
-        </Card>
-        
-        <Card className="rounded-xl shadow-sm bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-zinc-950 border-none">
-            <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                   <CalendarIcon className="w-6 h-6" />
-                </div>
-                <div>
-                   <p className="text-sm font-medium text-muted-foreground">Active Subscriptions</p>
-                   <p className="text-3xl font-bold text-amber-600">{subscriptions.filter(s => s.status === 'active').length}</p>
-                </div>
-            </CardContent>
-        </Card>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard icon={<Clock className="text-blue-500 w-5 h-5" />} title="Upcoming Total" value={formatCurrency(upcomingTotal)} />
+        <SummaryCard icon={<CreditCard className="text-emerald-500 w-5 h-5" />} title="Monthly Cost" value={formatCurrency(totalMonthly)} valueClass="text-emerald-600" />
+        <SummaryCard icon={<AlertCircle className="text-rose-500 w-5 h-5" />} title="Overdue" value={`${overdueSubs.length} bill${overdueSubs.length === 1 ? '' : 's'}`} valueClass={overdueSubs.length > 0 ? "text-rose-600" : ""} />
+        <SummaryCard icon={<CalendarIcon className="text-indigo-500 w-5 h-5" />} title="Active Subs" value={`${activeSubs.length} bill${activeSubs.length === 1 ? '' : 's'}`} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Main List */}
-        <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-lg font-semibold">Your Subscriptions</h3>
-            
-            {isLoading && subscriptions.length === 0 ? (
-                <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-            ) : subscriptions.length === 0 ? (
-                 <Card className="rounded-xl border-dashed">
-                    <CardContent className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                        <CalendarIcon className="w-12 h-12 mb-4 opacity-20" />
-                        <p>No active subscriptions found.</p>
-                    </CardContent>
-                 </Card>
-            ) : (
-                <div className="space-y-3">
-                    {subscriptions.map(sub => (
-                        <Card key={sub.id} className="rounded-xl shadow-sm hover:shadow transition-shadow group">
-                           <CardContent className="p-4 flex items-center justify-between">
-                               <div className="flex items-center gap-4">
-                                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                        {sub.name.charAt(0).toUpperCase()}
-                                   </div>
-                                   <div>
-                                       <h4 className="font-semibold">{sub.name}</h4>
-                                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                           <Badge variant="outline" className="font-normal px-1.5 py-0 capitalize border-border">
-                                              {sub.frequency}
-                                           </Badge>
-                                           <span className="flex items-center gap-1">
-                                               <CalendarIcon className="w-3 h-3" />
-                                               Next: {format(new Date(sub.nextBillingDate), 'MMM dd, yyyy')}
-                                           </span>
-                                       </div>
-                                   </div>
-                               </div>
-
-                               <div className="flex items-center gap-4">
-                                   <div className="text-right">
-                                       <div className="font-semibold">{formatCurrency(sub.amount)}</div>
-                                       {sub.status !== 'active' && <Badge variant="secondary" className="text-[10px] mt-1 h-4">Paused</Badge>}
-                                   </div>
-
-                                   <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <Edit2 className="w-4 h-4 text-muted-foreground" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => setSubToEdit(sub)}>
-                                          <Edit2 className="w-4 h-4 mr-2" /> Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => deleteSubscription(sub.id)}>
-                                          <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                               </div>
-                           </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+      {/* Upcoming Schedule */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold">Upcoming Schedule</h3>
+          <p className="text-sm text-muted-foreground mt-1">Next 30 days bill timeline</p>
         </div>
-
-        {/* Coming Up Sidebar */}
-        <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Upcoming Bills</h3>
-             <Card className="rounded-xl shadow-sm bg-muted/30 border-none">
-                 <CardContent className="p-4 space-y-4">
-                     {upcoming.length === 0 ? (
-                         <div className="text-sm text-center text-muted-foreground py-4">
-                             No upcoming bills this month.
-                         </div>
-                     ) : (
-                         upcoming.slice(0, 5).map(sub => (
-                             <div key={sub.id} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
-                                 <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-primary" />
-                                    <span className="font-medium truncate max-w-[120px]">{sub.name}</span>
-                                 </div>
-                                 <div className="flex flex-col items-end">
-                                    <span className="font-semibold">{formatCurrency(sub.amount)}</span>
-                                    <span className="text-xs text-muted-foreground">{format(new Date(sub.nextBillingDate), 'MMM dd')}</span>
-                                 </div>
-                             </div>
-                         ))
-                     )}
-                 </CardContent>
-             </Card>
+        <div className="flex overflow-x-auto gap-4 pb-4 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {upcomingSubs.map(sub => {
+            const cat = getCategory(sub.categoryId);
+            return (
+              <Card key={sub.id} className="min-w-[140px] snap-start rounded-3xl border-border/50 shadow-sm flex-shrink-0">
+                <CardContent className="p-5 flex flex-col items-center justify-center text-center gap-1.5">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary mb-2">
+                     {cat?.icon ? <CategoryIcon icon={cat.icon} size="sm" /> : <CreditCard className="w-5 h-5" />}
+                  </div>
+                  <p className="font-semibold text-sm truncate w-full">{sub.name}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{format(new Date(sub.nextBillingDate), 'MMM d')}</p>
+                  <p className="font-bold mt-1 text-sm">{formatCurrency(sub.amount)}</p>
+                </CardContent>
+              </Card>
+            )
+          })}
+          {upcomingSubs.length === 0 && (
+              <div className="text-sm text-muted-foreground italic py-8 border-2 border-dashed rounded-3xl w-full text-center">No upcoming bills in the next 30 days.</div>
+          )}
         </div>
-
       </div>
+
+      {/* Tabs & List */}
+      <Tabs defaultValue="upcoming" className="space-y-6">
+        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 space-x-8">
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold data-[state=inactive]:text-muted-foreground">
+             Upcoming ({upcomingSubs.length})
+          </TabsTrigger>
+          <TabsTrigger value="overdue" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold data-[state=inactive]:text-muted-foreground">
+             Overdue ({overdueSubs.length})
+          </TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold data-[state=inactive]:text-muted-foreground">
+             All ({subscriptions.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upcoming" className="mt-4">
+            <SubList subs={upcomingSubs} />
+        </TabsContent>
+        <TabsContent value="overdue" className="mt-4">
+            <SubList subs={overdueSubs} />
+        </TabsContent>
+        <TabsContent value="all" className="mt-4">
+            <SubList subs={subscriptions} />
+        </TabsContent>
+      </Tabs>
 
       <AddSubscriptionModal 
          open={isAddModalOpen || !!subToEdit} 

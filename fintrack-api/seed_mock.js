@@ -27,7 +27,7 @@ const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
 const sql = `
 DELETE FROM users WHERE username = 'test';
-INSERT INTO users (id, username, password_hash, email) VALUES ('${userId}', 'test', '${passwordHash}', 'test@example.com');
+INSERT INTO users (id, username, password_hash) VALUES ('${userId}', 'test', '${passwordHash}');
 
 INSERT INTO wallets (id, name, type, initial_balance, balance, currency) VALUES ('${wallet1Id}', 'Main Bank', 'bank', 15000000, 25000000, 'IDR');
 INSERT INTO wallets (id, name, type, initial_balance, balance, currency) VALUES ('${wallet2Id}', 'E-Wallet', 'e-wallet', 1000000, 2500000, 'IDR');
