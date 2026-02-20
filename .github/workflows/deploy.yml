@@ -35,7 +35,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name fintrack-frontend --branch main
+          command: pages deploy dist --project-name fintrack-frontend --branch production
           workingDirectory: ./fintrack-app
 
   deploy-backend:
