@@ -1,120 +1,193 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  AreaChart, Area
+  AreaChart, Area,
+  LineChart, Line
 } from 'recharts';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useCategoryStore } from '@/store/useCategoryStore';
 import { formatCurrency } from '@/lib/utils';
-import CategoryIcon from '@/components/shared/category-icon';
 import EmptyState from '@/components/shared/empty-state';
 import AnimatedPage from '@/components/shared/animated-page';
-import { useState, useMemo } from 'react';
-import { BarChart3, TrendingUp, ArrowUpRight, ArrowDownRight, PiggyBank } from 'lucide-react';
+import { useMemo } from 'react';
+import { BarChart3, TrendingUp, TrendingDown, ArrowUpRight, PiggyBank, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function Statistics() {
   const { transactions } = useTransactionStore();
-  const [period, setPeriod] = useState('Month'); // 'Month' | 'Year' | 'All'
 
-  // Filter Transactions
-  const filteredTransactions = useMemo(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-
-    return transactions.filter(t => {
-      const d = new Date(t.date);
-      if (period === 'Year') return d.getFullYear() === currentYear;
-      if (period === 'Month') return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-      return true; // All
-    });
-  }, [transactions, period]);
-
-  return <StatisticsContent period={period} setPeriod={setPeriod} filteredTransactions={filteredTransactions} allTransactions={transactions} />;
+  // Always use all transactions for the overview processing
+  return <StatisticsContent allTransactions={transactions} />;
 }
 
-function StatisticsContent({ period, setPeriod, filteredTransactions, allTransactions }: any) {
+function StatisticsContent({ allTransactions }: any) {
   const { categories } = useCategoryStore();
 
   const data = useMemo(() => {
-    let income = 0;
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    let totalIncome = 0;
     let totalExpense = 0;
-    let needs = 0;
-    let wants = 0;
-    let savings = 0;
+    
+    // For KPI: Current vs Last Month
+    let currentMonthExpense = 0;
+    let lastMonthExpense = 0;
 
-    const expenseList: any[] = [];
+    // For KPI: Highest Saving Month
+    const monthlyNet: Record<string, number> = {};
 
-    filteredTransactions.forEach((t: any) => {
+    // For KPI: Top Spending Category (Current Month)
+    const currentMonthCategoryExpense: Record<string, { value: number, name: string }> = {};
+
+    // For Radar: Current Month vs 6-Month Average
+    const sixMonthCategoryExpense: Record<string, number> = {};
+    const radarCurrentMonth: Record<string, number> = {};
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+    const expenseList: any[] = []; // For Donut Chart (Current Month typically)
+
+    allTransactions.forEach((t: any) => {
+      const d = new Date(t.date);
+      const isCurrentMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      const isLastMonth = d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+      const isWithin6Months = d >= sixMonthsAgo;
+
+      const monthKey = d.toLocaleDateString('en-US', { month: 'long' });
+
       if (t.type === 'income') {
-        income += t.amount;
+        if (isCurrentMonth) totalIncome += t.amount;
+        if (!monthlyNet[monthKey]) monthlyNet[monthKey] = 0;
+        monthlyNet[monthKey] += t.amount;
       } else {
-        totalExpense += t.amount;
+        if (isCurrentMonth) totalExpense += t.amount;
         
-        // Find group
-        const cat = categories.find((c: any) => c.id === t.categoryId);
-        const group = cat?.group || 'wants'; // Default to wants
+        if (!monthlyNet[monthKey]) monthlyNet[monthKey] = 0;
+        monthlyNet[monthKey] -= t.amount;
 
-        if (group === 'needs') needs += t.amount;
-        else if (group === 'savings') savings += t.amount;
-        else wants += t.amount;
+        if (isCurrentMonth) {
+            currentMonthExpense += t.amount;
+            if(!currentMonthCategoryExpense[t.categoryId]) {
+                currentMonthCategoryExpense[t.categoryId] = { value: 0, name: t.categoryName };
+            }
+            currentMonthCategoryExpense[t.categoryId].value += t.amount;
+            
+            if(!radarCurrentMonth[t.categoryName]) radarCurrentMonth[t.categoryName] = 0;
+            radarCurrentMonth[t.categoryName] += t.amount;
 
-        expenseList.push({ ...t, group });
+            expenseList.push(t);
+        }
+        if (isLastMonth) lastMonthExpense += t.amount;
+
+        if (isWithin6Months) {
+            if(!sixMonthCategoryExpense[t.categoryName]) sixMonthCategoryExpense[t.categoryName] = 0;
+            sixMonthCategoryExpense[t.categoryName] += t.amount;
+        }
       }
     });
 
-    return { 
-      income, 
-      expense: totalExpense, 
-      net: income - totalExpense, 
-      needs, 
-      wants, 
-      savings,
-      savingsRate: income > 0 ? ((income - (needs + wants)) / income) * 100 : 0
-      // specificSavingsRate: income > 0 ? (savings / income) * 100 : 0
-    };
-  }, [filteredTransactions, categories]);
-
-  // Radar Data
-  const radarData = [
-    { subject: 'Needs', A: data.needs, fullMark: data.income },
-    { subject: 'Wants', A: data.wants, fullMark: data.income },
-    { subject: 'Savings', A: data.savings, fullMark: data.income },
-  ];
-
-  // Monthly Trend Data (Net Cash Flow)
-  const trendData = useMemo(() => {
-    const map: Record<string, any> = {};
-    allTransactions.forEach((t: any) => {
-        const d = new Date(t.date);
-        // last 6 months or current year
-        if(d.getFullYear() !== new Date().getFullYear()) return; 
-
-        const key = d.toLocaleDateString('en-US', { month: 'short' });
-        if(!map[key]) map[key] = { name: key, income: 0, expense: 0, savings: 0 };
-        
-        if(t.type === 'income') map[key].income += t.amount;
-        else {
-            map[key].expense += t.amount;
-             const cat = categories.find((c: any) => c.id === t.categoryId);
-             if(cat?.group === 'savings') map[key].savings += t.amount;
+    // Highest Saving Month
+    let highestSavingMonth = 'N/A';
+    let highestSavingValue = -Infinity;
+    Object.entries(monthlyNet).forEach(([month, net]) => {
+        if (net > highestSavingValue) {
+            highestSavingValue = net;
+            highestSavingMonth = month;
         }
     });
-    return Object.values(map).sort((a: any, b: any) => {
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return months.indexOf(a.name) - months.indexOf(b.name);
+
+    // Top Spending Category
+    let topSpendingCategory = 'N/A';
+    let topSpendingValue = 0;
+    Object.values(currentMonthCategoryExpense).forEach((cat) => {
+         if(cat.value > topSpendingValue) {
+             topSpendingValue = cat.value;
+             topSpendingCategory = cat.name;
+         }
     });
+
+    // Spending Trend
+    let spendingTrendValue = 0;
+    let spendingTrendDirection = 'Neutral';
+    if (lastMonthExpense > 0) {
+        spendingTrendValue = ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100;
+        spendingTrendDirection = spendingTrendValue > 0 ? 'Increasing' : 'Decreasing';
+    }
+
+    // Savings Rate (Current Month)
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+
+    // Prepare Radar Data (Top 5 Categories by 6m avg)
+    const top6MCats = Object.entries(sixMonthCategoryExpense)
+        .map(([name, val]) => ({ name, val: val / 6 }))
+        .sort((a, b) => b.val - a.val)
+        .slice(0, 6);
+
+    const radarData = top6MCats.map(cat => ({
+        subject: cat.name,
+        current: radarCurrentMonth[cat.name] || 0,
+        average: cat.val
+    }));
+
+    return { 
+      income: totalIncome, 
+      expense: totalExpense, 
+      highestSavingMonth,
+      highestSavingValue: highestSavingValue === -Infinity ? 0 : highestSavingValue,
+      topSpendingCategory,
+      topSpendingValue,
+      spendingTrendValue,
+      spendingTrendDirection,
+      savingsRate,
+      radarData,
+      currentMonthExpenseList: expenseList
+    };
   }, [allTransactions, categories]);
 
-  // CATEGORY BREAKDOWN
+  // Monthly Trend Data (Last 6 Months)
+  const trendData = useMemo(() => {
+    const map: Record<string, any> = {};
+    const months = [];
+    
+    // Generate last 6 months keys
+    for(let i=5; i>=0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const key = d.toLocaleDateString('en-US', { month: 'short' });
+        months.push(key);
+        map[key] = { name: key, income: 0, expense: 0, savingsRate: 0 };
+    }
+
+    allTransactions.forEach((t: any) => {
+        const d = new Date(t.date);
+        const key = d.toLocaleDateString('en-US', { month: 'short' });
+        if(map[key]) {
+            if(t.type === 'income') map[key].income += t.amount;
+            else map[key].expense += t.amount;
+        }
+    });
+
+    return months.map(m => {
+        const item = map[m];
+        const net = item.income - item.expense;
+        item.net = net;
+        item.savingsRate = item.income > 0 ? (net / item.income) * 100 : 0;
+        return item;
+    });
+  }, [allTransactions]);
+
+  // CATEGORY BREAKDOWN (Current Month)
   const expenseByCategory = useMemo(() => {
-    const expenses = filteredTransactions.filter((t: any) => t.type === 'expense');
-    const grouped = expenses.reduce((acc: any, t: any) => {
+    const grouped = data.currentMonthExpenseList.reduce((acc: any, t: any) => {
       const existing = acc.find((c: any) => c.name === t.categoryName);
       if (existing) {
         existing.value += t.amount;
@@ -129,7 +202,7 @@ function StatisticsContent({ period, setPeriod, filteredTransactions, allTransac
       return acc;
     }, []);
     return grouped.sort((a: any, b: any) => b.value - a.value);
-  }, [filteredTransactions]);
+  }, [data.currentMonthExpenseList]);
 
   if (allTransactions.length === 0) {
     return <EmptyState icon={BarChart3} title="No Analytics Yet" description="Add transactions to see your financial insights." />;
@@ -138,86 +211,113 @@ function StatisticsContent({ period, setPeriod, filteredTransactions, allTransac
   return (
     <AnimatedPage className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
-        <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:w-[300px]">
-            <TabsTrigger value="Month">Month</TabsTrigger>
-            <TabsTrigger value="Year">Year</TabsTrigger>
-            <TabsTrigger value="All">All Time</TabsTrigger>
-            </TabsList>
-        </Tabs>
+        <div>
+            <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
+            <p className="text-muted-foreground">Deep insights into your financial patterns.</p>
+        </div>
+        <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
+            <Calendar className="w-4 h-4" />
+            Last 6 Months
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="spending">Spending</TabsTrigger>
-            <TabsTrigger value="savings">Savings</TabsTrigger>
+        <TabsList className="bg-transparent space-x-2 p-0 h-auto">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Overview</TabsTrigger>
+            <TabsTrigger value="spending" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Spending</TabsTrigger>
+            <TabsTrigger value="savings" className="data-[state=active]:bg-secondary rounded-full px-4 py-2 bg-background border">Savings</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6 mt-4">
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPICard title="Net Cash Flow" amount={data.net} icon={TrendingUp} trend={data.net > 0 ? "Positive" : "Negative"} color={data.net >= 0 ? "text-emerald-500" : "text-rose-500"} />
-                <KPICard title="Total Income" amount={data.income} icon={ArrowDownRight} color="text-blue-500" />
-                <KPICard title="Total Expense" amount={data.expense} icon={ArrowUpRight} color="text-rose-500" />
-                <KPICard title="Savings Rate" value={`${data.savingsRate.toFixed(1)}%`} icon={PiggyBank} color="text-violet-500" subtext="of Income" />
+                <KPICard 
+                    title="Highest Saving Month" 
+                    value={data.highestSavingMonth} 
+                    icon={TrendingUp} 
+                    color="text-emerald-500" 
+                    subtext={`${formatCurrency(data.highestSavingValue)} saved`} 
+                />
+                <KPICard 
+                    title="Top Spending Category" 
+                    value={data.topSpendingCategory} 
+                    icon={ArrowUpRight} 
+                    color="text-violet-500" 
+                    subtext={`${formatCurrency(data.topSpendingValue)} this month`}
+                />
+                <KPICard 
+                    title="Spending Trend" 
+                    value={data.spendingTrendDirection} 
+                    icon={data.spendingTrendDirection === 'Decreasing' ? TrendingDown : TrendingUp} 
+                    color={data.spendingTrendDirection === 'Decreasing' ? 'text-emerald-500' : 'text-rose-500'} 
+                    subtext={`${data.spendingTrendValue > 0 ? '+' : ''}${data.spendingTrendValue.toFixed(1)}% vs last month`}
+                />
+                <KPICard 
+                    title="Savings Rate" 
+                    value={`${data.savingsRate.toFixed(0)}%`} 
+                    icon={PiggyBank} 
+                    color="text-amber-500" 
+                    subtext="Of total income" 
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Radar Chart - N / W / S */}
+                {/* Bar Chart - Net Flow (Green/Purple bars) */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Spending Pattern</CardTitle>
-                        <CardDescription>Needs vs Wants vs Savings</CardDescription>
+                        <CardTitle className="text-base font-medium">Net Cash Flow</CardTitle>
+                        <CardDescription>Monthly income minus expenses</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center">
+                    <CardContent className="h-[300px] mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                <PolarGrid stroke="hsl(var(--muted-foreground))" strokeOpacity={0.2} />
-                                <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
-                                <Radar name="Amount" dataKey="A" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
-                                <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--popover-foreground))' }} />
-                            </RadarChart>
+                            <BarChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
+                                <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+                                <Tooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
+                                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                <Bar dataKey="expense" name="Expense" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* Bar Chart - Net Flow */}
+                {/* Radar Chart - Category Pattern */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Net Cash Flow</CardTitle>
-                        <CardDescription>Income vs Expenses (Year to Date)</CardDescription>
+                        <CardTitle className="text-base font-medium">Spending Pattern</CardTitle>
+                        <CardDescription>Current vs average spending by category</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px]">
+                    <CardContent className="h-[300px] flex items-center justify-center -mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={trendData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <YAxis hide />
-                                <Tooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
-                                <Bar dataKey="income" name="Income" fill="hsl(142, 60%, 45%)" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="expense" name="Expense" fill="hsl(0, 65%, 55%)" radius={[4, 4, 0, 0]} />
-                            </BarChart>
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data.radarData}>
+                                <PolarGrid stroke="hsl(var(--muted))" strokeOpacity={0.5} />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
+                                <Radar name="Current Month" dataKey="current" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                                <Radar name="6-Month Average" dataKey="average" stroke="#6366f1" strokeDasharray="5 5" fill="none" />
+                                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                                <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
+                            </RadarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>
         </TabsContent>
 
-        <TabsContent value="spending" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                <Card className="md:col-span-5 h-[400px] flex flex-col">
+        <TabsContent value="spending" className="space-y-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="h-[450px] flex flex-col">
                     <CardHeader>
-                        <CardTitle>Breakdown</CardTitle>
+                        <CardTitle className="text-base font-medium">Category Breakdown</CardTitle>
+                        <CardDescription>Spending by category this month</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <CardContent className="flex-1 flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="90%">
                             <PieChart>
-                                <Pie data={expenseByCategory} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value">
+                                <Pie data={expenseByCategory} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value" stroke="none">
                                     {expenseByCategory.map((entry: any, index: number) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
                                 <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} itemStyle={{ color: 'hsl(var(--popover-foreground))' }} />
@@ -225,66 +325,76 @@ function StatisticsContent({ period, setPeriod, filteredTransactions, allTransac
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                <Card className="md:col-span-7">
+
+                <Card className="h-[450px] flex flex-col">
                     <CardHeader>
-                        <CardTitle>Top Categories</CardTitle>
+                        <CardTitle className="text-base font-medium">Spending Ranking</CardTitle>
+                        <CardDescription>Categories sorted by amount spent</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {expenseByCategory.map((cat: any) => (
-                            <div key={cat.name} className="space-y-1">
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <CategoryIcon icon={cat.icon} color={cat.color} size="sm" />
-                                        <span>{cat.name}</span>
+                    <CardContent className="flex-1 overflow-auto pr-2">
+                        <div className="space-y-4 pt-2">
+                            {expenseByCategory.map((cat: any, i: number) => (
+                                <div key={cat.name} className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-muted-foreground w-4 text-left">{i+1}</span>
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                        <span className="font-medium">{cat.name}</span>
                                     </div>
-                                    <span className="font-medium tabular-nums">{formatCurrency(cat.value)}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="font-medium tabular-nums text-right w-20">{formatCurrency(cat.value)}</span>
+                                        <span className="text-muted-foreground w-12 text-right">{((cat.value / data.expense) * 100).toFixed(0)}%</span>
+                                    </div>
                                 </div>
-                                <Progress value={(cat.value / data.expense) * 100} className="h-2" indicatorClassName="bg-primary/80" />
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
         </TabsContent>
 
-        <TabsContent value="savings" className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Savings Trend</CardTitle>
-                    <CardDescription>Total Savings Analysis</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[350px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={trendData}>
-                            <defs>
-                                <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.8}/>
-                                    <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                            <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                            <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}k`} />
-                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
-                             {/* Approximating "Savings" as Income - Expense for this chart, or explicit savings? Let's use Income - Expense as Net Savings */}
-                            <Area type="monotone" dataKey={(data) => data.income - data.expense} name="Net Savings" stroke="hsl(262, 83%, 58%)" fillOpacity={1} fill="url(#colorSavings)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-            <div className="grid grid-cols-3 gap-4">
-                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">{formatCurrency(data.income - data.expense)}</div>
-                        <p className="text-xs text-muted-foreground">Total Net Savings ({period})</p>
+        <TabsContent value="savings" className="space-y-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium">Savings Trend</CardTitle>
+                        <CardDescription>Monthly savings over time</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
+                                <YAxis tickFormatter={(val) => `$${val}`} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} formatter={(val: number | undefined) => formatCurrency(val || 0)} />
+                                <Area type="monotone" dataKey="net" name="Net Savings" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorSavings)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </CardContent>
-                 </Card>
-                 <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">{data.savingsRate.toFixed(1)}%</div>
-                        <p className="text-xs text-muted-foreground">Average Savings Rate</p>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium">Savings Rate History</CardTitle>
+                        <CardDescription>Percentage of income saved each month</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dy={10} />
+                                <YAxis tickFormatter={(val) => `${val}%`} domain={[0, 'auto']} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} dx={-10} />
+                                <Tooltip formatter={(val: any) => typeof val === 'number' ? `${val.toFixed(1)}%` : `${val}%`} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
+                                <Line type="monotone" dataKey="savingsRate" name="Savings Rate" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
                     </CardContent>
-                 </Card>
+                </Card>
             </div>
         </TabsContent>
       </Tabs>
@@ -292,7 +402,7 @@ function StatisticsContent({ period, setPeriod, filteredTransactions, allTransac
   );
 }
 
-function KPICard({ title, amount, value, icon: Icon, trend, color, subtext }: any) {
+function KPICard({ title, amount, value, icon: Icon, color, subtext }: any) {
     return (
         <Card>
             <CardContent className="p-6 flex flex-col gap-1">
@@ -302,10 +412,10 @@ function KPICard({ title, amount, value, icon: Icon, trend, color, subtext }: an
                         <Icon className={cn("w-4 h-4", color)} />
                     </div>
                 </div>
-                <div className="text-2xl font-bold mt-2">{amount !== undefined ? formatCurrency(amount) : value}</div>
+                <div className="text-xl font-bold mt-2 truncate">{value !== undefined ? value : (amount !== undefined ? formatCurrency(amount) : '')}</div>
                 {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
-                {trend && <p className={cn("text-xs font-medium", trend === 'Positive' ? 'text-emerald-500' : 'text-rose-500')}>{trend} flow</p>}
             </CardContent>
         </Card>
     )
 }
+
