@@ -1,0 +1,186 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - img [ref=e8]
+          - generic [ref=e11]: FinTrack
+        - button [ref=e12]:
+          - img [ref=e13]
+      - navigation [ref=e16]:
+        - link "Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /
+          - img [ref=e18]
+          - text: Dashboard
+        - link "Transactions" [ref=e23] [cursor=pointer]:
+          - /url: /transactions
+          - img [ref=e24]
+          - text: Transactions
+        - link "Statistics" [ref=e27] [cursor=pointer]:
+          - /url: /statistics
+          - img [ref=e28]
+          - text: Statistics
+        - link "Categories" [ref=e30] [cursor=pointer]:
+          - /url: /categories
+          - img [ref=e31]
+          - text: Categories
+        - link "Wallets" [ref=e33] [cursor=pointer]:
+          - /url: /wallets
+          - img [ref=e34]
+          - text: Wallets
+        - link "Budgets" [ref=e37] [cursor=pointer]:
+          - /url: /budgets
+          - img [ref=e38]
+          - text: Budgets
+        - link "Settings" [ref=e41] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e42]
+          - text: Settings
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e48]: JD
+          - generic [ref=e49]:
+            - generic [ref=e50]: John Doe
+            - generic [ref=e51]: john.doe@example.com
+        - button "Add Transaction" [ref=e52] [cursor=pointer]:
+          - img
+          - text: Add Transaction
+    - generic [ref=e53]:
+      - banner [ref=e54]:
+        - button [ref=e56] [cursor=pointer]:
+          - img
+        - generic [ref=e57]:
+          - button [ref=e58] [cursor=pointer]:
+            - img
+          - button [ref=e65] [cursor=pointer]:
+            - img
+          - generic [ref=e68]: JD
+      - main [ref=e69]:
+        - generic [ref=e174]:
+          - generic [ref=e176]:
+            - button "Day" [ref=e177] [cursor=pointer]
+            - button "Week" [ref=e178] [cursor=pointer]
+            - button "Month" [ref=e179] [cursor=pointer]
+            - button "Year" [ref=e180] [cursor=pointer]
+          - generic [ref=e181]:
+            - generic [ref=e183]:
+              - generic [ref=e184]: Total Balance
+              - generic [ref=e185]: Rp 9.450.000
+            - generic [ref=e187]:
+              - generic [ref=e188]: Income
+              - generic [ref=e189]: Rp 4.050.000
+              - generic [ref=e190]:
+                - img [ref=e191]
+                - generic [ref=e194]: +12.5%
+            - generic [ref=e196]:
+              - generic [ref=e197]: Expenses
+              - generic [ref=e198]: Rp 2.760.000
+              - generic [ref=e199]:
+                - img [ref=e200]
+                - generic [ref=e203]: "-8.2%"
+          - generic [ref=e204]:
+            - generic [ref=e205]:
+              - generic [ref=e207]: Income vs Expenses
+              - generic [ref=e210]:
+                - list [ref=e212]:
+                  - listitem [ref=e213]:
+                    - img "Expense legend icon" [ref=e214]
+                    - text: Expense
+                  - listitem [ref=e216]:
+                    - img "Income legend icon" [ref=e217]
+                    - text: Income
+                - application [ref=e219]:
+                  - generic [ref=e223]:
+                    - generic [ref=e224]:
+                      - generic [ref=e226]: Oct
+                      - generic [ref=e228]: Dec
+                      - generic [ref=e230]: Feb
+                    - generic [ref=e231]:
+                      - generic [ref=e233]: 0.0M
+                      - generic [ref=e235]: 0.9M
+                      - generic [ref=e237]: 1.8M
+                      - generic [ref=e239]: 2.7M
+                      - generic [ref=e241]: 3.6M
+            - generic [ref=e242]:
+              - generic [ref=e244]: Budget Overview
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - img [ref=e248]
+                  - generic [ref=e253]:
+                    - generic [ref=e254]:
+                      - generic [ref=e255]: Food & Drink
+                      - generic [ref=e256]: Rp 1.750.000 / Rp 2.800.000
+                    - generic [ref=e259]:
+                      - generic [ref=e260]: 63% used
+                      - generic [ref=e261]: Rp 1.050.000 remaining
+                - generic [ref=e262]:
+                  - img [ref=e264]
+                  - generic [ref=e268]:
+                    - generic [ref=e269]:
+                      - generic [ref=e270]: Transport
+                      - generic [ref=e271]: Rp 620.000 / Rp 800.000
+                    - generic [ref=e274]:
+                      - generic [ref=e275]: 78% used
+                      - generic [ref=e276]: Rp 180.000 remaining
+                - generic [ref=e277]:
+                  - img [ref=e279]
+                  - generic [ref=e282]:
+                    - generic [ref=e283]:
+                      - generic [ref=e284]: Shopping
+                      - generic [ref=e285]: Rp 1.650.000 / Rp 1.500.000
+                    - generic [ref=e288]:
+                      - generic [ref=e289]: 110% used
+                      - generic [ref=e290]: 110% over budget
+                - generic [ref=e291]:
+                  - img [ref=e293]
+                  - generic [ref=e296]:
+                    - generic [ref=e297]:
+                      - generic [ref=e298]: Housing
+                      - generic [ref=e299]: Rp 1.800.000 / Rp 2.000.000
+                    - generic [ref=e302]:
+                      - generic [ref=e303]: 90% used
+                      - generic [ref=e304]: Rp 200.000 remaining
+          - generic [ref=e305]:
+            - generic [ref=e306]:
+              - generic [ref=e307]: Recent Transactions
+              - link "View All" [ref=e308] [cursor=pointer]:
+                - /url: /transactions
+                - text: View All
+                - img
+            - generic [ref=e310]:
+              - generic [ref=e311]:
+                - img [ref=e313]
+                - generic [ref=e316]:
+                  - generic [ref=e317]: Salary
+                  - generic [ref=e318]: Monthly salary
+                - generic [ref=e319]: Bank Mandiri
+                - generic [ref=e320]: + Rp 3.200.000
+              - generic [ref=e321]:
+                - img [ref=e323]
+                - generic [ref=e328]:
+                  - generic [ref=e329]: Food & Drink
+                  - generic [ref=e330]: Lunch at warung
+                - generic [ref=e331]: Cash
+                - generic [ref=e332]: − Rp 85.000
+              - generic [ref=e333]:
+                - img [ref=e335]
+                - generic [ref=e339]:
+                  - generic [ref=e340]: Transport
+                  - generic [ref=e341]: Grab to office
+                - generic [ref=e342]: GoPay
+                - generic [ref=e343]: − Rp 35.000
+              - generic [ref=e344]:
+                - img [ref=e346]
+                - generic [ref=e349]:
+                  - generic [ref=e350]: Shopping
+                  - generic [ref=e351]: New headphones cable
+                - generic [ref=e352]: Credit Card BCA
+                - generic [ref=e353]: − Rp 250.000
+              - generic [ref=e354]:
+                - img [ref=e356]
+                - generic [ref=e361]:
+                  - generic [ref=e362]: Food & Drink
+                  - generic [ref=e363]: Dinner with friends
+                - generic [ref=e364]: Cash
+                - generic [ref=e365]: − Rp 150.000
+  - generic [ref=e366]: 0.0M

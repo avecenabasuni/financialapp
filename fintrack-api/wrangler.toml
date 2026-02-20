@@ -1,0 +1,14 @@
+name = "fintrack-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fintrack-db"
+database_id = "15673898-661c-4f97-a0da-708380555ba4" # Placeholder for local development
+preview_database_id = "fintrack-db-local"
+
+[observability]
+enabled = true
+[vars]
+JWT_SECRET = "fintrack-secret-key-change-me-in-production"
