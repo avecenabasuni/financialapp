@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8787' : 'https://fintrack-api.avecenalegacy.workers.dev');
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
