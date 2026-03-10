@@ -6,7 +6,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   AreaChart,
@@ -27,9 +26,6 @@ import {
   getDaysInMonth,
   getAllMonths,
 } from "@/lib/utils";
-import SummaryCard from "@/components/shared/summary-card";
-import TransactionRow from "@/components/shared/transaction-row";
-import BudgetProgress from "@/components/shared/budget-progress";
 import { QuickActions } from "@/components/shared/quick-actions";
 import { HealthScoreCard } from "@/components/shared/health-score-card";
 import { UpcomingBillsCard } from "@/components/shared/upcoming-bills-card";
@@ -37,7 +33,6 @@ import { FinancialTipsCard } from "@/components/shared/financial-tips-card";
 import {
   Wallet,
   TrendingUp,
-  TrendingDown,
   PiggyBank,
   MoreHorizontal,
   ArrowUpRight,
@@ -45,7 +40,6 @@ import {
   ArrowRightLeft,
   DollarSign,
   CreditCard,
-  Sparkles,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -205,10 +199,8 @@ function ModernStatCard({
 
 export default function Dashboard() {
   const { user } = useAuthStore();
-  const [period, setPeriod] = useState("Month");
-  const [addTxOpen, setAddTxOpen] = useState(false);
-  const [commandOpen, setCommandOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [period] = useState("Month");
+  const [, setAddTxOpen] = useState(false);
   const navigate = useNavigate();
 
   const { transactions } = useTransactionStore();
@@ -226,30 +218,6 @@ export default function Dashboard() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const netSavings = income - expenses;
-
-  // Helper for Chart Description
-  const getPeriodDescription = () => {
-    const now = new Date();
-    if (period === "Year") return now.getFullYear().toString();
-    if (period === "Month")
-      return now.toLocaleDateString("en-GB", {
-        month: "long",
-        year: "numeric",
-      });
-    if (period === "Week") {
-      const start = getStartOfWeek(now);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 6);
-      return `${start.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-      })} - ${end.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-      })}`;
-    }
-    return "Overview";
-  };
 
   // Dynamic Greeting Logic
   const greeting = useMemo(() => {

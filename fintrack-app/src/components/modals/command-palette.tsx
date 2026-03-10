@@ -14,7 +14,6 @@ import {
   Search,
   ArrowRight,
   Command,
-  TrendingUp,
   ShoppingCart,
   Coffee,
   Car,

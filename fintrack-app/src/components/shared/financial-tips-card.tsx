@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Lightbulb,
   TrendingDown,
-  PiggyBank,
   Target,
   ArrowRight,
   ChevronLeft,
@@ -14,8 +12,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTransactionStore } from "@/store/useTransactionStore";
-import { useBudgetStore } from "@/store/useBudgetStore";
-import { useWalletStore } from "@/store/useWalletStore";
 
 interface Tip {
   id: number;
@@ -32,11 +28,8 @@ interface Tip {
 export function FinancialTipsCard() {
   const [currentTip, setCurrentTip] = useState(0);
   const { transactions } = useTransactionStore();
-  const { budgets } = useBudgetStore();
-  const { wallets } = useWalletStore();
 
   // Calculate some dynamic values for tips
-  const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
   const monthlyExpenses = transactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);

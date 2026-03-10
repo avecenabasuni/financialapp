@@ -7,7 +7,6 @@ import {
   AlertCircle,
   Info,
   TrendingUp,
-  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

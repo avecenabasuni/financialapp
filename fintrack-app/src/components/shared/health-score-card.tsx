@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
-  TrendingUp,
   PiggyBank,
   CreditCard,
   CheckCircle,
@@ -18,8 +17,6 @@ import {
   Info,
   ArrowUpRight,
   Wallet,
-  Target,
-  Calendar,
 } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useBudgetStore } from "@/store/useBudgetStore";

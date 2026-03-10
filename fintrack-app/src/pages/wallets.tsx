@@ -21,11 +21,7 @@ import {
   Shield,
   Eye,
   EyeOff,
-  TrendingUp,
-  Building2,
-  Landmark,
   ArrowUpRight,
-  RefreshCw,
 } from "lucide-react";
 import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
 import { useState } from "react";
@@ -187,7 +183,7 @@ export default function Wallets() {
     .reduce((s, w) => s + w.balance, 0);
   const totalLiabilities = wallets
     .filter((w) => w.balance < 0)
-    .reduce((s, w) => Math.abs(w.balance), 0);
+    .reduce((_, w) => Math.abs(w.balance), 0);
 
   const maskBalance = () => "••••••";
 

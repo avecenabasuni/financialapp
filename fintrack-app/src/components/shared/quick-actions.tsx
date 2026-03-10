@@ -5,9 +5,7 @@ import {
   Download,
   Receipt,
   ArrowRightLeft,
-  CreditCard,
   QrCode,
-  PiggyBank,
 } from "lucide-react";
 import { useToast } from "@/context/toast-context";
 

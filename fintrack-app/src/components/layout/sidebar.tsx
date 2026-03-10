@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 import {
   LayoutDashboard,
@@ -77,8 +76,8 @@ export default function Sidebar({
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const [commandOpen, setCommandOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [, setCommandOpen] = useState(false);
+  const [, setNotificationsOpen] = useState(false);
 
   const SidebarItem = ({
     item,

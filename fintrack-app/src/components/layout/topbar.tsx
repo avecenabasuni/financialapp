@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Bell, Menu } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-
 import { useNotificationStore } from "@/store/useNotificationStore";
-import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   onMenuToggle: () => void;
@@ -24,13 +15,7 @@ export default function TopBar({
   onNotificationsClick,
 }: TopBarProps) {
   const [shortcut, setShortcut] = useState("Ctrl + K");
-  const {
-    notifications,
-    unreadCount,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-  } = useNotificationStore();
+  const { unreadCount, fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
     fetchNotifications();
