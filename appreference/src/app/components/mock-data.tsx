@@ -37,6 +37,28 @@ export interface Goal {
   icon: string;
 }
 
+export interface Bill {
+  id: string;
+  name: string;
+  amount: number;
+  dueDate: string;
+  frequency: "monthly" | "yearly" | "weekly" | "quarterly";
+  category: string;
+  status: "upcoming" | "paid" | "overdue";
+  autopay: boolean;
+  icon: string;
+  color: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  type: "warning" | "success" | "info" | "alert";
+  read: boolean;
+}
+
 export const transactions: Transaction[] = [
   { id: "1", description: "Salary Deposit", amount: 5200, date: "2026-02-18", category: "Salary", type: "income", account: "Checking", icon: "Briefcase" },
   { id: "2", description: "Whole Foods Market", amount: -127.45, date: "2026-02-17", category: "Groceries", type: "expense", account: "Credit Card", icon: "ShoppingCart" },
@@ -78,6 +100,43 @@ export const goals: Goal[] = [
   { id: "2", name: "Vacation Fund", target: 5000, current: 2800, icon: "Palmtree", deadline: "2026-08-15" },
   { id: "3", name: "New Car", target: 30000, current: 8500, icon: "Car", deadline: "2027-01-01" },
   { id: "4", name: "Home Down Payment", target: 60000, current: 21000, icon: "Home", deadline: "2027-12-31" },
+];
+
+export const bills: Bill[] = [
+  { id: "1", name: "Rent", amount: 1800, dueDate: "2026-03-01", frequency: "monthly", category: "Housing", status: "upcoming", autopay: true, icon: "Home", color: "#6366f1" },
+  { id: "2", name: "Netflix", amount: 15.99, dueDate: "2026-03-16", frequency: "monthly", category: "Entertainment", status: "upcoming", autopay: true, icon: "Tv", color: "#ef4444" },
+  { id: "3", name: "Spotify", amount: 9.99, dueDate: "2026-03-08", frequency: "monthly", category: "Entertainment", status: "upcoming", autopay: true, icon: "Music", color: "#10b981" },
+  { id: "4", name: "Electric Bill", amount: 142.30, dueDate: "2026-03-14", frequency: "monthly", category: "Utilities", status: "upcoming", autopay: false, icon: "Zap", color: "#f59e0b" },
+  { id: "5", name: "Gym Membership", amount: 49.99, dueDate: "2026-03-12", frequency: "monthly", category: "Health", status: "upcoming", autopay: true, icon: "Dumbbell", color: "#ec4899" },
+  { id: "6", name: "Internet", amount: 79.99, dueDate: "2026-03-05", frequency: "monthly", category: "Utilities", status: "upcoming", autopay: true, icon: "Wifi", color: "#0ea5e9" },
+  { id: "7", name: "Car Insurance", amount: 189.00, dueDate: "2026-03-15", frequency: "monthly", category: "Transport", status: "upcoming", autopay: false, icon: "Car", color: "#8b5cf6" },
+  { id: "8", name: "Phone Plan", amount: 65.00, dueDate: "2026-03-10", frequency: "monthly", category: "Utilities", status: "upcoming", autopay: true, icon: "Smartphone", color: "#14b8a6" },
+  { id: "9", name: "Cloud Storage", amount: 2.99, dueDate: "2026-03-20", frequency: "monthly", category: "Tech", status: "upcoming", autopay: true, icon: "Cloud", color: "#64748b" },
+  { id: "10", name: "Water Bill", amount: 45.00, dueDate: "2026-02-25", frequency: "monthly", category: "Utilities", status: "overdue", autopay: false, icon: "Droplets", color: "#0ea5e9" },
+  { id: "11", name: "Rent (Feb)", amount: 1800, dueDate: "2026-02-01", frequency: "monthly", category: "Housing", status: "paid", autopay: true, icon: "Home", color: "#6366f1" },
+  { id: "12", name: "Netflix (Feb)", amount: 15.99, dueDate: "2026-02-16", frequency: "monthly", category: "Entertainment", status: "paid", autopay: true, icon: "Tv", color: "#ef4444" },
+];
+
+export const notifications: Notification[] = [
+  { id: "1", title: "Budget Alert", message: "Shopping budget is at 95% - only $10.01 remaining", time: "2 min ago", type: "warning", read: false },
+  { id: "2", title: "Bill Due Tomorrow", message: "Water Bill ($45.00) is due tomorrow", time: "1 hour ago", type: "alert", read: false },
+  { id: "3", title: "Salary Received", message: "Salary of $5,200 deposited into Checking", time: "2 days ago", type: "success", read: false },
+  { id: "4", title: "Goal Milestone", message: "Emergency Fund is 83% complete!", time: "3 days ago", type: "info", read: true },
+  { id: "5", title: "Large Transaction", message: "Rent payment of $1,800 processed", time: "5 days ago", type: "info", read: true },
+  { id: "6", title: "Card Declined", message: "Transaction of $234.50 was declined on Amex ****1098", time: "1 week ago", type: "alert", read: true },
+  { id: "7", title: "Savings Tip", message: "You saved 42% of income this month - great job!", time: "1 week ago", type: "success", read: true },
+  { id: "8", title: "New Feature", message: "Currency converter is now available in your dashboard", time: "2 weeks ago", type: "info", read: true },
+];
+
+export const currencies = [
+  { code: "USD", name: "US Dollar", symbol: "$", rate: 1 },
+  { code: "EUR", name: "Euro", symbol: "\u20ac", rate: 0.92 },
+  { code: "GBP", name: "British Pound", symbol: "\u00a3", rate: 0.79 },
+  { code: "JPY", name: "Japanese Yen", symbol: "\u00a5", rate: 149.50 },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$", rate: 1.36 },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$", rate: 1.53 },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF", rate: 0.88 },
+  { code: "INR", name: "Indian Rupee", symbol: "\u20b9", rate: 83.12 },
 ];
 
 export const monthlyData = [

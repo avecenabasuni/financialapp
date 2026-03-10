@@ -7,6 +7,7 @@ import { AnalyticsPage } from "./components/analytics-page";
 import { AccountsPage } from "./components/accounts-page";
 import { GoalsPage } from "./components/goals-page";
 import { SettingsPage } from "./components/settings-page";
+import { BillsPage } from "./components/bills-page";
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: "transactions", Component: TransactionsPage },
       { path: "budgets", Component: BudgetsPage },
+      { path: "bills", Component: BillsPage },
       { path: "analytics", Component: AnalyticsPage },
       { path: "accounts", Component: AccountsPage },
       { path: "goals", Component: GoalsPage },

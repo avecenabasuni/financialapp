@@ -19,6 +19,13 @@ import {
   PiggyBank,
   DollarSign,
   Shield,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  Building2,
+  Landmark,
+  ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
 import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
 import { useState } from "react";
@@ -164,6 +171,7 @@ export default function Wallets() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingWallet, setEditingWallet] = useState<WalletType | null>(null);
   const [walletToDelete, setWalletToDelete] = useState<string | null>(null);
+  const [showBalances, setShowBalances] = useState(true);
 
   const totalBalance = wallets.reduce((s, w) => s + w.balance, 0);
   const cashWallets = wallets.filter((w) => w.type === "cash");
@@ -173,6 +181,15 @@ export default function Wallets() {
   const cashBalance = cashWallets.reduce((s, w) => s + w.balance, 0);
   const bankBalance = bankWallets.reduce((s, w) => s + w.balance, 0);
   const ewalletBalance = ewalletWallets.reduce((s, w) => s + w.balance, 0);
+
+  const totalAssets = wallets
+    .filter((w) => w.balance >= 0)
+    .reduce((s, w) => s + w.balance, 0);
+  const totalLiabilities = wallets
+    .filter((w) => w.balance < 0)
+    .reduce((s, w) => Math.abs(w.balance), 0);
+
+  const maskBalance = () => "••••••";
 
   const handleEditWallet = (wallet: WalletType) => {
     setEditingWallet(wallet);
@@ -221,64 +238,112 @@ export default function Wallets() {
           </Button>
         </div>
 
-        {/* Main Balance Card */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 shadow-lg shadow-primary/5">
-          <CardContent className="p-8">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <Wallet className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Total Balance
-                  </p>
-                  <p className="text-4xl font-bold tracking-tight">
-                    {formatCurrency(totalBalance)}
-                  </p>
-                </div>
+        {/* Net Worth Card */}
+        <Card className="relative overflow-hidden border-border/60 hover:shadow-md transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-violet-500/5" />
+          <CardContent className="relative p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  Net Worth
+                </p>
+                <p className="text-3xl mt-1.5 font-bold">
+                  {showBalances ? formatCurrency(totalBalance) : maskBalance()}
+                </p>
+                <Badge
+                  variant="secondary"
+                  className="mt-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 border-0 gap-1 text-xs"
+                >
+                  <ArrowUpRight className="h-3 w-3" />
+                  +5.2% this month
+                </Badge>
               </div>
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 rounded-full border-2 hover:shadow-lg hover:scale-105 transition-all duration-200"
-                  onClick={() => setShowTransferModal(true)}
-                >
-                  <ArrowUpDown className="w-4 h-4" />
-                  Transfer
-                </Button>
-                <Button
-                  size="sm"
-                  className="gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
-                  onClick={() => setShowAddWallet(true)}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Wallet
-                </Button>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  Total Assets
+                </p>
+                <p className="text-2xl mt-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                  {showBalances ? formatCurrency(totalAssets) : maskBalance()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Across {wallets.filter((w) => w.balance >= 0).length} accounts
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  Total Liabilities
+                </p>
+                <p className="text-2xl mt-1.5 text-red-600 dark:text-red-400 font-bold">
+                  {showBalances
+                    ? formatCurrency(totalLiabilities)
+                    : maskBalance()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {wallets.filter((w) => w.balance < 0).length} account
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl border-2 hover:shadow-lg transition-all duration-200"
+              onClick={() => setShowBalances(!showBalances)}
+            >
+              {showBalances ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+              {showBalances ? "Hide" : "Show"} Balances
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-full border-2 hover:shadow-lg hover:scale-105 transition-all duration-200"
+              onClick={() => setShowTransferModal(true)}
+            >
+              <ArrowUpDown className="w-4 h-4" />
+              Transfer
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
+              onClick={() => setShowAddWallet(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Wallet
+            </Button>
+          </div>
+        </div>
 
         {/* Balance Breakdown */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             icon={<PiggyBank className="w-5 h-5" />}
             title="Cash"
-            value={formatCurrency(cashBalance)}
+            value={showBalances ? formatCurrency(cashBalance) : maskBalance()}
             color="emerald"
           />
           <StatCard
             icon={<Shield className="w-5 h-5" />}
             title="Bank"
-            value={formatCurrency(bankBalance)}
+            value={showBalances ? formatCurrency(bankBalance) : maskBalance()}
             color="blue"
           />
           <StatCard
             icon={<DollarSign className="w-5 h-5" />}
             title="E-Wallet"
-            value={formatCurrency(ewalletBalance)}
+            value={
+              showBalances ? formatCurrency(ewalletBalance) : maskBalance()
+            }
             color="violet"
           />
         </div>
