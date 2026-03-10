@@ -30,6 +30,7 @@ import { QuickActions } from "@/components/shared/quick-actions";
 import { HealthScoreCard } from "@/components/shared/health-score-card";
 import { UpcomingBillsCard } from "@/components/shared/upcoming-bills-card";
 import { FinancialTipsCard } from "@/components/shared/financial-tips-card";
+import { QuickTransferWidget } from "@/components/shared/quick-transfer-widget";
 import {
   Wallet,
   TrendingUp,
@@ -669,10 +670,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Middle row: Health + Upcoming Bills + Financial Tips */}
+      {/* Middle row: Health + Upcoming Bills + Quick Transfer */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <HealthScoreCard />
         <UpcomingBillsCard />
+        <QuickTransferWidget />
+      </div>
+
+      {/* Financial Tips row */}
+      <div className="grid grid-cols-1">
         <FinancialTipsCard />
       </div>
 
