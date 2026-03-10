@@ -16,7 +16,6 @@ import {
   Wallet,
   Trash2,
   CreditCard,
-  TrendingUp,
   PiggyBank,
   DollarSign,
   Shield,
