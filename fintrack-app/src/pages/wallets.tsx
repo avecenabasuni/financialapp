@@ -16,8 +16,8 @@ import { useState } from "react";
 import { type Wallet as WalletType } from "@/types";
 
 export default function Wallets() {
-  const { wallets, deleteWallet } = useWalletStore();
-  const { transactions, deleteTransactionsByWallet } = useTransactionStore();
+  const { wallets } = useWalletStore();
+  const { transactions } = useTransactionStore();
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingWallet, setEditingWallet] = useState<WalletType | null>(null);
