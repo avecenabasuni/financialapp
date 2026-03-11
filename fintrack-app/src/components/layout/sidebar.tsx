@@ -24,6 +24,7 @@ import {
   Calendar,
   Command,
   Bell,
+  Repeat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -55,6 +56,7 @@ const navItems = [
   { label: "Budgets", icon: PiggyBank, path: "/budgets" },
   { label: "Goals", icon: Target, path: "/goals" },
   { label: "Subscriptions", icon: Calendar, path: "/subscriptions" },
+  { label: "Recurring", icon: Repeat, path: "/recurring" },
   { label: "Analytics", icon: BarChart3, path: "/statistics" },
   { label: "Accounts", icon: Wallet, path: "/wallets" },
   { label: "Categories", icon: FolderKanban, path: "/categories" },

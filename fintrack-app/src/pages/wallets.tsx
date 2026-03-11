@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWalletStore } from "@/store/useWalletStore";
@@ -22,97 +28,148 @@ import {
   Eye,
   EyeOff,
   ArrowUpRight,
+  MoreVertical,
+  PieChart as PieChartIcon,
+  TrendingUp,
+  Building2,
+  Landmark,
+  CreditCard as CreditCardIcon,
+  RefreshCw,
 } from "lucide-react";
 import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { type Wallet as WalletType } from "@/types";
 import { cn } from "@/lib/utils";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+
+const walletTypeColors: Record<string, string> = {
+  cash: "#10b981",
+  bank: "#3b82f6",
+  ewallet: "#8b5cf6",
+  savings: "#f59e0b",
+  credit: "#ef4444",
+  investment: "#06b6d4",
+  other: "#64748b",
+};
+
+const walletIcons: Record<string, React.ElementType> = {
+  cash: Building2,
+  bank: Landmark,
+  ewallet: CreditCardIcon,
+  savings: PiggyBank,
+  credit: CreditCard,
+  investment: TrendingUp,
+};
 
 const WalletCard = ({
   wallet,
   onEdit,
   onDelete,
+  showBalance,
 }: {
   wallet: WalletType;
   onEdit: (wallet: WalletType) => void;
   onDelete: (id: string) => void;
+  showBalance: boolean;
 }) => {
-  const getGradient = (type: string) => {
-    switch (type) {
-      case "cash":
-        return "from-emerald-500/10 to-green-500/5 border-emerald-500/20";
-      case "bank":
-        return "from-blue-500/10 to-indigo-500/5 border-blue-500/20";
-      case "e-wallet":
-        return "from-violet-500/10 to-purple-500/5 border-violet-500/20";
-      case "savings":
-        return "from-amber-500/10 to-orange-500/5 border-amber-500/20";
-      default:
-        return "from-secondary to-secondary/50 border-border/50";
-    }
-  };
-
-  const getIconGradient = (type: string) => {
-    switch (type) {
-      case "cash":
-        return "from-emerald-500 to-green-500";
-      case "bank":
-        return "from-blue-500 to-indigo-500";
-      case "e-wallet":
-        return "from-violet-500 to-purple-500";
-      case "savings":
-        return "from-amber-500 to-orange-500";
-      default:
-        return "from-primary to-primary/80";
-    }
-  };
+  const Icon = walletIcons[wallet.type] || Building2;
+  const color = walletTypeColors[wallet.type] || walletTypeColors.other;
+  const isPositive = wallet.balance >= 0;
+  const maskBalance = () => "••••••";
 
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 border",
-        getGradient(wallet.type)
+        "group relative overflow-hidden border-border/60 hover:shadow-md hover:shadow-black/5 transition-all duration-300 cursor-pointer"
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <CardContent className="p-6 relative">
-        <div className="flex items-start justify-between mb-4">
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5 transition-all"
+        style={{ backgroundColor: color }}
+      />
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(135deg, ${color}08 0%, transparent 60%)`,
+        }}
+      />
+      <CardContent className="relative p-5">
+        <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg",
-                getIconGradient(wallet.type)
-              )}
+              className="flex h-11 w-11 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+              style={{ backgroundColor: `${color}15`, color }}
             >
-              <CategoryIcon icon={wallet.icon} color={wallet.color} />
+              <Icon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-base">{wallet.name}</h3>
-              <Badge
-                variant="secondary"
-                className="text-[10px] mt-1.5 capitalize bg-secondary/80"
-              >
-                {wallet.type}
-              </Badge>
+              <h3 className="text-sm font-semibold">{wallet.name}</h3>
+              <p className="text-xs text-muted-foreground">{wallet.type}</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/10 hover:scale-110"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(wallet.id);
-            }}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(wallet);
+              }}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(wallet.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground font-medium">Balance</p>
-          <p className="text-2xl font-bold tracking-tight">
-            {formatCurrency(wallet.balance)}
+        <div className="mt-4">
+          <p className="text-xs text-muted-foreground">Current Balance</p>
+          <p
+            className={cn(
+              "text-2xl mt-0.5 font-bold",
+              !isPositive && "text-red-600 dark:text-red-400"
+            )}
+          >
+            {showBalance
+              ? `${isPositive ? "" : "-"}${formatCurrency(
+                  Math.abs(wallet.balance)
+                )}`
+              : maskBalance()}
           </p>
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <Badge
+            variant="secondary"
+            className="border-0 text-xs"
+            style={{ backgroundColor: `${color}20`, color }}
+          >
+            {wallet.type}
+          </Badge>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <RefreshCw className="h-3 w-3" />
+            Updated today
+          </div>
         </div>
         <button
           onClick={() => onEdit(wallet)}
@@ -157,6 +214,286 @@ const StatCard = ({
         <p className="text-lg font-bold">{value}</p>
       </div>
     </div>
+  );
+};
+
+// Asset Allocation Card Component
+const AssetAllocationCard = ({
+  wallets,
+  showBalance,
+}: {
+  wallets: WalletType[];
+  showBalance: boolean;
+}) => {
+  const maskBalance = () => "••••••";
+
+  const assetWallets = wallets.filter((w) => w.balance >= 0);
+  const totalAssets = assetWallets.reduce((s, w) => s + w.balance, 0);
+
+  const pieData = assetWallets.map((w) => ({
+    name: w.name,
+    value: w.balance,
+    color: walletTypeColors[w.type] || walletTypeColors.other,
+    type: w.type,
+  }));
+
+  return (
+    <Card className="border-border/60 hover:shadow-md hover:shadow-black/5 transition-all duration-300">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <PieChartIcon className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-semibold">
+            Asset Allocation
+          </CardTitle>
+        </div>
+        <CardDescription className="text-xs mt-0.5">
+          Distribution across accounts
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-[160px]">
+          {assetWallets.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {pieData.map((entry, idx) => (
+                    <Cell key={idx} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip
+                  formatter={(value: number) => [
+                    showBalance ? formatCurrency(value) : maskBalance(),
+                    "",
+                  ]}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid var(--border)",
+                    background: "var(--card)",
+                    fontSize: "12px",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+              No assets to display
+            </div>
+          )}
+        </div>
+        <div className="space-y-2.5 mt-3">
+          {pieData.map((item) => {
+            const pct =
+              totalAssets > 0
+                ? Math.round((item.value / totalAssets) * 100)
+                : 0;
+            return (
+              <div key={item.name} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                  </span>
+                  <span className="text-muted-foreground">{pct}%</span>
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${pct}%`, backgroundColor: item.color }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Balance History Chart Component
+const BalanceHistoryChart = ({
+  wallets,
+  showBalance,
+}: {
+  wallets: WalletType[];
+  showBalance: boolean;
+}) => {
+  const maskBalance = () => "••••••";
+
+  // Generate mock historical data (in real app, this would come from transactions)
+  const historicalData = useMemo(() => {
+    const months = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb"];
+    const cashWallets = wallets.filter((w) => w.type === "cash");
+    const bankWallets = wallets.filter((w) => w.type === "bank");
+    const ewalletWallets = wallets.filter((w) => w.type === "ewallet");
+
+    const cashBalance = cashWallets.reduce((s, w) => s + w.balance, 0);
+    const bankBalance = bankWallets.reduce((s, w) => s + w.balance, 0);
+    const ewalletBalance = ewalletWallets.reduce((s, w) => s + w.balance, 0);
+
+    // Generate progressive data
+    return months.map((month, idx) => {
+      const progress = (idx + 1) / months.length;
+      return {
+        month,
+        cash: Math.round(cashBalance * (0.7 + 0.3 * progress)),
+        bank: Math.round(bankBalance * (0.7 + 0.3 * progress)),
+        ewallet: Math.round(ewalletBalance * (0.7 + 0.3 * progress)),
+      };
+    });
+  }, [wallets]);
+
+  const totalCash = wallets
+    .filter((w) => w.type === "cash")
+    .reduce((s, w) => s + w.balance, 0);
+  const totalBank = wallets
+    .filter((w) => w.type === "bank")
+    .reduce((s, w) => s + w.balance, 0);
+  const totalEwallet = wallets
+    .filter((w) => w.type === "ewallet")
+    .reduce((s, w) => s + w.balance, 0);
+
+  return (
+    <Card className="border-border/60 hover:shadow-md hover:shadow-black/5 transition-all duration-300">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold">
+              Balance History
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Account balance trends over time
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: "#10b981" }}
+              />
+              Cash
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: "#3b82f6" }}
+              />
+              Bank
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: "#8b5cf6" }}
+              />
+              E-Wallet
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[260px]">
+          {totalCash > 0 || totalBank > 0 || totalEwallet > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={historicalData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="bankGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="ewalletGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(148,163,184,0.15)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
+                />
+                <RechartsTooltip
+                  formatter={(value: number) => [
+                    showBalance ? formatCurrency(value) : maskBalance(),
+                    "",
+                  ]}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid var(--border)",
+                    background: "var(--card)",
+                    fontSize: "12px",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  }}
+                />
+                {totalCash > 0 && (
+                  <Area
+                    type="monotone"
+                    dataKey="cash"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fill="url(#cashGrad)"
+                    name="Cash"
+                  />
+                )}
+                {totalBank > 0 && (
+                  <Area
+                    type="monotone"
+                    dataKey="bank"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fill="url(#bankGrad)"
+                    name="Bank"
+                  />
+                )}
+                {totalEwallet > 0 && (
+                  <Area
+                    type="monotone"
+                    dataKey="ewallet"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    fill="url(#ewalletGrad)"
+                    name="E-Wallet"
+                  />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+              No balance history to display
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -344,28 +681,42 @@ export default function Wallets() {
           />
         </div>
 
-        {/* Wallets Grid */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Your Wallets</h3>
-              <p className="text-sm text-muted-foreground">
-                {wallets.length} wallet{wallets.length !== 1 ? "s" : ""}{" "}
-                connected
-              </p>
+        {/* Wallets Grid + Asset Allocation */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Wallet Cards */}
+          <div className="lg:col-span-2">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Your Wallets</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {wallets.length} wallet{wallets.length !== 1 ? "s" : ""}{" "}
+                    connected
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {wallets.map((w) => (
+                  <WalletCard
+                    key={w.id}
+                    wallet={w}
+                    onEdit={handleEditWallet}
+                    onDelete={(id) => setWalletToDelete(id)}
+                    showBalance={showBalances}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {wallets.map((w) => (
-              <WalletCard
-                key={w.id}
-                wallet={w}
-                onEdit={handleEditWallet}
-                onDelete={(id) => setWalletToDelete(id)}
-              />
-            ))}
+
+          {/* Asset Allocation */}
+          <div className="lg:col-span-1">
+            <AssetAllocationCard wallets={wallets} showBalance={showBalances} />
           </div>
         </div>
+
+        {/* Balance History Chart */}
+        <BalanceHistoryChart wallets={wallets} showBalance={showBalances} />
 
         {/* Recent Activity */}
         <Card className="shadow-sm border-border/50">
@@ -400,6 +751,17 @@ export default function Wallets() {
           </CardContent>
         </Card>
       </AnimatedPage>
+
+      {/* Floating Action Button for mobile */}
+      <div className="fixed bottom-6 right-6 z-50 sm:hidden">
+        <Button
+          onClick={() => setShowAddWallet(true)}
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 hover:scale-105"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </div>
 
       <AddWalletModal
         open={showAddWallet}

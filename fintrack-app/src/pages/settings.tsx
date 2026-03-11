@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserStore } from "@/store/useUserStore";
+import { useEffect } from "react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useWalletStore } from "@/store/useWalletStore";
 import { useBudgetStore } from "@/store/useBudgetStore";
@@ -41,10 +42,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import EditProfileModal from "@/components/modals/edit-profile-modal";
+import ChangePasswordModal from "@/components/modals/change-password-modal";
 import { toast } from "sonner";
 
 export default function Settings() {
-  const { user } = useUserStore();
+  const { user, setCurrency, setLanguage } = useUserStore();
   const { transactions, reset: resetTransactions } = useTransactionStore();
   const { wallets, reset: resetWallets } = useWalletStore();
   const { budgets, reset: resetBudgets } = useBudgetStore();
@@ -61,8 +63,12 @@ export default function Settings() {
   );
   const importRef = useRef<HTMLInputElement>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [currency, setCurrency] = useState("IDR");
-  const [language, setLanguage] = useState("en");
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  // Sync local state with store
+  useEffect(() => {
+    // Initialize from store if needed
+  }, [user.currency, user.language]);
 
   const handleExport = () => {
     const data = JSON.stringify(
@@ -215,7 +221,7 @@ export default function Settings() {
             </div>
             <Select
               className="w-28 h-9 text-xs"
-              value={currency}
+              value={user.currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
               <option value="IDR">IDR Rp</option>
@@ -233,7 +239,7 @@ export default function Settings() {
             </div>
             <Select
               className="w-28 h-9 text-xs"
-              value={language}
+              value={user.language}
               onChange={(e) => setLanguage(e.target.value)}
             >
               <option value="en">English</option>
@@ -394,7 +400,11 @@ export default function Settings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button variant="outline" className="w-full justify-between h-11">
+          <Button
+            variant="outline"
+            className="w-full justify-between h-11"
+            onClick={() => setIsChangePasswordOpen(true)}
+          >
             <span className="flex items-center gap-2">
               <Key className="w-4 h-4" />
               Change Password
@@ -452,6 +462,10 @@ export default function Settings() {
       <EditProfileModal
         open={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
+      />
+      <ChangePasswordModal
+        open={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
       />
     </AnimatedPage>
   );
