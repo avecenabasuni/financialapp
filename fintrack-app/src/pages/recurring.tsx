@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import AnimatedPage from "@/components/shared/animated-page";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Repeat,
   Plus,
@@ -21,8 +14,6 @@ import {
   CheckCircle2,
   PauseCircle,
   PlayCircle,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 import {
   useRecurringStore,

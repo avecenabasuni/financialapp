@@ -29,7 +29,6 @@ import { type Category } from "@/types";
 import { type Wallet } from "@/types";
 import { type Transaction } from "@/types";
 import { useToast } from "@/context/toast-context";
-import CategoryIcon from "@/components/shared/category-icon";
 import { cn, formatCurrency } from "@/lib/utils";
 
 interface AddRecurringModalProps {

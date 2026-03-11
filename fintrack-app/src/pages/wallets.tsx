@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { useWalletStore } from "@/store/useWalletStore";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { formatCurrency } from "@/lib/utils";
-import CategoryIcon from "@/components/shared/category-icon";
 import TransactionRow from "@/components/shared/transaction-row";
 import EmptyState from "@/components/shared/empty-state";
 import AnimatedPage from "@/components/shared/animated-page";
@@ -270,8 +269,8 @@ const AssetAllocationCard = ({
                   ))}
                 </Pie>
                 <RechartsTooltip
-                  formatter={(value: number) => [
-                    showBalance ? formatCurrency(value) : maskBalance(),
+                  formatter={(value: number | undefined) => [
+                    showBalance ? formatCurrency(value ?? 0) : maskBalance(),
                     "",
                   ]}
                   contentStyle={{
@@ -442,8 +441,8 @@ const BalanceHistoryChart = ({
                   tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
                 />
                 <RechartsTooltip
-                  formatter={(value: number) => [
-                    showBalance ? formatCurrency(value) : maskBalance(),
+                  formatter={(value: number | undefined) => [
+                    showBalance ? formatCurrency(value ?? 0) : maskBalance(),
                     "",
                   ]}
                   contentStyle={{
